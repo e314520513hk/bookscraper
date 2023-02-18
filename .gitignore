@@ -1,0 +1,12 @@
+dist/*
+build/*
+dataset/*
+classtest.py
+errlog.txt
+testlog.txt
+test.txt
+test.py
+request.spec
+main.spec
+website/__pycache__
+logmanager/__pycache__
