@@ -16,6 +16,9 @@ from website import jd,opac
 from logmanager import log
 from dataset import sugarhost
 from selenium.webdriver.common.keys import Keys
+
+
+
 def searchTaiwanItemNo(china_item_no):
     
     if len(china_item_no) <=0:
@@ -28,7 +31,33 @@ def searchTaiwanItemNo(china_item_no):
     
     return searchTaiwanItemNo(china_item_no[0:-1])
 
+def import_book(jd):
+    
+    try:
+        if jd['ISBN'] == '' or jd['book_name'] == '':
+            raise Exception('required fields are not satisfied.')
+        rows = sugarhost.query(f"select book_no from china_book where ISBN='{jd['ISBN']}'")
+        if len(rows) >0:
+            columns = ''
+            for key,value in jd.items():
 
+                if value == '' or value == 0 or key == 'ISBN':
+                    continue
+                if type(value).__name__ == 'str':
+                    columns += f"{key}='{value}',"
+                elif type(value).__name__ == 'int':
+                    columns += f"{key}={value},"
+            columns = columns[:-1]
+            
+            sugarhost.update(f"update china_book set {columns} where ISBN='{jd['ISBN']}'")
+        else:
+            sugarhost.insert()
+        return True
+    
+    except Exception as ex:
+        log.err_log(ex)
+        return False
+    
 
 # log.err_log("program is starting")
 # q = sugarhost.query('SELECT * FROM `china_book` WHERE `ISBN` LIKE "9787302590354"')
@@ -84,11 +113,12 @@ try:
             continue
         jd_bookinfo = jd.scrape(driver,isbn)
         # opac_bookinfo = opac.scrape(driver,isbn)
+
+        # print(f"opac info:{opac_bookinfo}")
+        import_book(jd_bookinfo)
         
-        log.test_log(f"jd info: {jd_bookinfo}\n")
-        sys.exit()
         sleep(2)
-    sys.exit("scrapping is done.")    
+      
 except Exception as ex:
     if  type(ex).__name__ == 'NoSuchWindowException':
         sys.exit("window already closed")
