@@ -18,7 +18,7 @@ def scrape(driver,isbn):
     
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     book_info['price'] = get_price(soup)
-    book_info['bookname'] = get_bookname(soup)
+    book_info['book_name'] = get_bookname(soup)
     book_info['author'] = get_author(soup)
     book_info['publish'] = get_publish(soup)
     book_info['china_item'] = get_china_item(soup)

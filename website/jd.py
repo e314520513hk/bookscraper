@@ -115,9 +115,9 @@ def get_kaiban(soup):
         kaiban = int(soup.select(".p-parameter > ul > li:-soup-contains('开本：')")[0]['title'].replace("开","").strip())
         
         if kaiban < 32:
-            return 1
+            return '1'
         else:
-            return 2
+            return '2'
     except:
         return ""    
 
@@ -138,9 +138,9 @@ def get_banden(soup):
     try:
         banden = soup.select(".p-parameter > ul > li:-soup-contains('包装：')")[0]['title']
         if banden == '平装':
-            return 0
+            return '0'
         else:
-            return 1
+            return '1'
         
     except:
         return ""    

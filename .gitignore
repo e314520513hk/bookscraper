@@ -10,3 +10,5 @@ request.spec
 main.spec
 website/__pycache__
 logmanager/__pycache__
+__pycache__/tkinter.cpython-39.pyc
+tkinter_example.py
