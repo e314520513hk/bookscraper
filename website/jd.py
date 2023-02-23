@@ -25,48 +25,55 @@ def scrape(driver,isbn):
     # print(driver.find_element(By.XPATH, '//*[contains(text(),"自营")]/..').get_attribute('class'))
 
     sleep(3)
+    try:
+        has_selfgood = False
+        
+        for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
+   
+            if "自营" in ele.text:
+                has_selfgood= True
+                ele.click()
+                break
+        if not has_selfgood:
+            
+            driver.find_element(By.XPATH, "//div[@id='J_goodsList']/ul/li/div").click()
+        
+  
+        
+        
+        #get current window handle
+        p = driver.current_window_handle
+        #get first child window
+        chwd = driver.window_handles
 
-    has_selfgood = False
-    for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
-        if "自营" in ele.text:
-            has_selfgood= True
-            ele.click()
-            break
-    if not has_selfgood:
-        driver.find_element(By.XPATH, "//div[@id='J_goodsList']/ul/li/div").click()
+        for w in chwd:
+        #switch focus to child window
+            if(w!=p):
+                driver.switch_to.window(w)
+        
+        sleep(4)              
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        
+        book_info['book_name'] = get_bookname(soup)
+        
+        book_info['imglink'] = get_imgurl(driver)
+        book_info['author'] = get_author(driver)
+        book_info['publish'] = get_publish(soup)
+        book_info['kaiban'] = get_kaiban(soup)
+        book_info['publish_date'] = get_publish_date(soup)
+        book_info['ISBN'] = get_isbn(soup)
+        book_info['banden'] = get_banden(soup)
+        book_info['title'] = get_title(soup)
+        book_info['introduction'] = get_introduction(soup)
+        book_info['page_number'] = get_page_number(soup)
+        
+        driver.close()   
+        driver.switch_to.window(p)
+        sleep(1)
+        return book_info
+    except Exception as ex:
+        log.err_log(ex)
     
- 
-
-    
-    #get current window handle
-    p = driver.current_window_handle
-    #get first child window
-    chwd = driver.window_handles
-
-    for w in chwd:
-    #switch focus to child window
-        if(w!=p):
-            driver.switch_to.window(w)
-    WebDriverWait(driver, 10, 0.1).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, '#J-detail-content .book-detail-content')))
-    sleep(4)              
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    book_info['book_name'] = get_bookname(soup)
-    book_info['imglink'] = get_imgurl(driver)
-    book_info['author'] = get_author(driver)
-    book_info['publish'] = get_publish(soup)
-    book_info['kaiban'] = get_kaiban(soup)
-    book_info['publish_date'] = get_publish_date(soup)
-    book_info['ISBN'] = get_isbn(soup)
-    book_info['banden'] = get_banden(soup)
-    book_info['title'] = get_title(soup)
-    book_info['introduction'] = get_introduction(soup)
-    book_info['page_number'] = get_page_number(soup)
-    
-    driver.close()   
-    driver.switch_to.window(p)
-    sleep(1)
-    return book_info
 
 
 def get_bookname(soup):
@@ -94,14 +101,14 @@ def get_author(driver):
         
         for a in driver.find_elements(By.CSS_SELECTOR, '.p-author>a'):
             author = author + a.text + " "
-        return author
+        return cc.convert(author)
     except:
         return ""
 
 def get_publish(soup):
     try:
 
-        return soup.select(".p-parameter > ul > li:-soup-contains('出版社：')")[0]['title']
+        return cc.convert(soup.select(".p-parameter > ul > li:-soup-contains('出版社：')")[0]['title'])
     except:
         return ""
 def get_page_number(soup):

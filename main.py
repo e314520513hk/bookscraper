@@ -84,10 +84,6 @@ class Application(tk.Frame):
                     return
                 isbnlist = list(range(int(self.isbn_from.get()),int(self.isbn_to.get())))
             else:
-        
-                # self.status_msg.config(fg='#000')
-                # self.status_msg['text'] = "開始執行..."
-                # self.button.config(state='disabled')  
 
                 with open('isbnlist.txt','r') as isbnlist:
                     isbnlist = isbnlist.read().splitlines()
@@ -117,6 +113,7 @@ class Application(tk.Frame):
 
             for isbn in isbnlist:
                 isbn = str(isbn)
+                
                 try:
                     isbn = isbn.strip()
 
@@ -125,73 +122,30 @@ class Application(tk.Frame):
                     
                     jd_bookinfo = jd.scrape(driver,isbn)
                     opac_bookinfo = opac.scrape(driver,isbn)
-                
+                    
                     import_book(jd_bookinfo,opac_bookinfo)
                     
                 except TypeError as ex:
-                    log.err_log(f"isbn: {isbn} failed to import. {ex}")
+                    log.err_log(f"isbn: {isbn} failed to import. {ex.__str__()}")
 
                 except sugarhostException as ex: 
-                    log.err_log(f"isbn: {isbn} failed to import. {ex}")
+                    log.err_log(f"isbn: {isbn} failed to import. {ex.__str__()}")
 
                 except Exception as ex:
-                    log.err_log(f"isbn: {isbn} failed to import. {ex}")
+                    log.err_log(f"isbn: {isbn} failed to import. {ex.__str__()}")
                 
                 sleep(2)
+
+            self.status_msg.config(fg='#000')
+            self.status_msg['text'] = "執行完畢..."
+            self.button.config(state='disabled')      
                     
         except Exception as ex:
             if  type(ex).__name__ == 'NoSuchWindowException':
                 sys.exit("window already closed")
             log.err_log(ex)
 
-    def execute2(self):
-        with open('isbnlist.txt','r') as isbnlist:
-                    isbnlist = isbnlist.read().splitlines()
-        
-        if len(isbnlist)<=0:
-            raise Exception("isbnlist.txt is empty.")
-            
-
-        s = Service(r"./chromedriver")
-        options = webdriver.ChromeOptions()
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        options.page_load_strategy = 'eager'
-        # options.add_argument('--headless')  # 啟動Headless 無頭
-        # options.add_argument('--disable-gpu') #關閉GPU 避免某些系統或是網頁出錯
-
-        # driver.set_window_size(1080, 768)
-        # driver.implicitly_wait(100)
-        baseUrl = 'https://tw.jd.com/'
-
-        driver = webdriver.Chrome(options=options, service=s)
-        driver.get(baseUrl)
-            
-        print("請先登入(10分鐘內)")
-        # WebDriverWait(driver, 600, 0.1).until(
-        #                         EC.presence_of_element_located((By.CSS_SELECTOR, '.icon-plus-nickname')))   
-
-        for isbn in isbnlist:
-            try:
-                isbn = isbn.strip()
-
-                if not isbn.isnumeric():
-                    raise TypeError(f"isbn:{isbn} must be numeric.")
-                
-                jd_bookinfo = jd.scrape(driver,isbn)
-                opac_bookinfo = opac.scrape(driver,isbn)
-            
-                import_book(jd_bookinfo,opac_bookinfo)
-                
-            except TypeError as ex:
-                log.err_log(f"isbn: {isbn} failed to import. {ex}")
-
-            except sugarhostException as ex: 
-                log.err_log(f"isbn: {isbn} failed to import. {ex}")
-
-            except Exception as ex:
-                log.err_log(f"isbn: {isbn} failed to import. {ex}")
-            
-            sleep(2)
+    
 class sugarhostException(Exception):
     def __init__(self,msg):
         self.msg = msg
@@ -223,8 +177,7 @@ def import_book(jd,opac):
             raise Exception('required fields are not satisfied.')
         
         rows = sugarhost.query(f"select book_no from china_book where ISBN='{jd['ISBN']}'")
-        if not rows:
-            raise sugarhostException('error occured during quering.')
+
         if len(rows) >0:
             columns = ''
             for key,value in jd.items():
@@ -269,8 +222,8 @@ def import_book(jd,opac):
             }
             columns = ','.join(list(china_book.keys()))
             values = "','".join(china_book.values())
-            print(f"insert into china_book({columns}) values('{values}')")
-            if not sugarhost.insert(f"insert into china_book({columns}) values({values})"):
+            
+            if not sugarhost.insert(f"insert into china_book({columns}) values('{values}')"):
                 raise sugarhostException('error occured during inserting book info.')
         return True
     
