@@ -1,6 +1,5 @@
 dist/*
 build/*
-dataset/*
 classtest.py
 errlog.txt
 testlog.txt
