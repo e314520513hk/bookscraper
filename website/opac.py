@@ -59,7 +59,7 @@ def get_price(soup):
 
     except Exception as ex:
         log.err_log(ex)
-        return ''
+        return 0
     
 def get_bookname(soup):
     try:

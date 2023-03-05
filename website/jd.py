@@ -27,54 +27,68 @@ def scrape(driver,isbn):
     sleep(3)
     try:
         has_selfgood = False
-        
+
+        WebDriverWait(driver, 3, 0.1).until(
+                                EC.visibility_of_element_located((By.XPATH, "//div[@id='J_goodsList']/ul/li/div"))  )  			
+
         for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
-   
+            log.test_log(cc.convert(ele.text))
             if "自营" in ele.text:
                 has_selfgood= True
                 ele.click()
                 break
+		
         if not has_selfgood:
             
-            driver.find_element(By.XPATH, "//div[@id='J_goodsList']/ul/li/div").click()
-        
-  
-        
-        
+            for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
+                if "世紀書緣專營店" in cc.convert(ele.text):
+                   has_selfgood= True
+                   ele.click()
+                   break
+                
+        else:    
+            raise Exception("Not selfByjd book found.")
+            
+        sleep(2)
+            
         #get current window handle
         p = driver.current_window_handle
         #get first child window
         chwd = driver.window_handles
-
+        log.test_log("4")
         for w in chwd:
-        #switch focus to child window
+            #switch focus to child window
             if(w!=p):
                 driver.switch_to.window(w)
-        
-        sleep(4)              
+        WebDriverWait(driver, 4, 0.1).until(
+                            EC.visibility_of_element_located((By.XPATH, "//img[@id='spec-img']"))  )  		
+        sleep(1)
+        log.test_log("5")	
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        
+
+        log.test_log("6")
         book_info['book_name'] = get_bookname(soup)
         
         book_info['imglink'] = get_imgurl(driver)
-        book_info['author'] = get_author(driver)
+        book_info['author'] = get_author(soup)
         book_info['publish'] = get_publish(soup)
         book_info['kaiban'] = get_kaiban(soup)
         book_info['publish_date'] = get_publish_date(soup)
         book_info['ISBN'] = get_isbn(soup)
         book_info['banden'] = get_banden(soup)
         book_info['title'] = get_title(soup)
-        book_info['introduction'] = get_introduction(soup)
+        try:
+            book_info['introduction'] = get_introduction(soup)
+        except:  
+            book_info['introduction'] = ""
         book_info['page_number'] = get_page_number(soup)
-        
+        log.test_log("6")
         driver.close()   
         driver.switch_to.window(p)
         sleep(1)
         return book_info
     except Exception as ex:
-        log.err_log(ex)
-    
-
+        raise Exception(f"error occured in scrape() in jd.{ex.__str__()}")
 
 def get_bookname(soup):
     
@@ -93,14 +107,13 @@ def get_imgurl(driver):
         return driver.find_element(By.CSS_SELECTOR, '#spec-img').get_attribute('src').replace('.avif','')
     except:
         return ""
-def get_author(driver):
+def get_author(soup):
     try:
         author = ""
-        WebDriverWait(driver, 3, 0.1).until(
-                                EC.visibility_of_element_located((By.CSS_SELECTOR, '.p-author>a'))  )  
-        
-        for a in driver.find_elements(By.CSS_SELECTOR, '.p-author>a'):
-            author = author + a.text + " "
+		
+        #return cc.convert(soup.select(".p-author>a")[0]])
+        for a in soup.select(".p-author>a"):
+                author = author + a.text + " "
         return cc.convert(author)
     except:
         return ""
@@ -267,5 +280,6 @@ def parse_introduction(detail):
     detail = ''.join(detail.splitlines())
 		
     detail = detail.strip()
+   
     detail = cc.convert(detail)		
     return detail

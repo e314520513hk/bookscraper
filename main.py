@@ -17,13 +17,13 @@ from logmanager import log
 from dataset import sugarhost
 from selenium.webdriver.common.keys import Keys
 import tkinter as tk
-
+from bs4 import BeautifulSoup
 class Application(tk.Frame):
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        self.grid()
-        self.createWidgets()
-    
+    def __init__(self):
+        #tk.Frame.__init__(self, master)
+        #self.grid()
+        #self.createWidgets()
+        self.execute()
     def createWidgets(self):
         
         
@@ -75,18 +75,18 @@ class Application(tk.Frame):
         try:
  
 
-            if self.selected_method.get() == 'isbn區間':
-                if self.isbn_from.get() == '' or self.isbn_to.get() == '':
-                    self.status_msg['text'] = "警告!未指定isbn區間."
-                    return
-                if int(self.isbn_to.get()) <= int(self.isbn_from.get()):
-                    self.status_msg['text'] = "警告!右邊輸入欄位必須大於左邊輸入欄位."
-                    return
-                isbnlist = list(range(int(self.isbn_from.get()),int(self.isbn_to.get())))
-            else:
-
-                with open('isbnlist.txt','r') as isbnlist:
-                    isbnlist = isbnlist.read().splitlines()
+            #if self.selected_method.get() == 'isbn區間':
+            #    if self.isbn_from.get() == '' or self.isbn_to.get() == '':
+            #        self.status_msg['text'] = "警告!未指定isbn區間."
+            #        return
+            #    if int(self.isbn_to.get()) <= int(self.isbn_from.get()):
+            #        self.status_msg['text'] = "警告!右邊輸入欄位必須大於左邊輸入欄位."
+            #        return
+            #    isbnlist = list(range(int(self.isbn_from.get()),int(self.isbn_to.get())))
+            #else:
+			
+            with open('isbnlist.txt','r') as isbnlist:
+                isbnlist = isbnlist.read().splitlines()
         
             if len(isbnlist)<=0:
                 raise Exception("isbnlist is empty.")
@@ -102,14 +102,15 @@ class Application(tk.Frame):
 
             # driver.set_window_size(1080, 768)
             # driver.implicitly_wait(100)
-            baseUrl = 'https://tw.jd.com/'
+            baseUrl = 'https://item.jd.com'
 
             driver = webdriver.Chrome(options=options, service=s)
             driver.get(baseUrl)
+            sleep(5)
             
             print("請先登入(10分鐘內)")
-            # WebDriverWait(driver, 600, 0.1).until(
-            #                         EC.presence_of_element_located((By.CSS_SELECTOR, '.icon-plus-nickname')))   
+            WebDriverWait(driver, 600, 0.1).until(
+                                     EC.presence_of_element_located((By.CSS_SELECTOR, '.icon-plus-nickname')))   
 
             for isbn in isbnlist:
                 isbn = str(isbn)
@@ -136,9 +137,7 @@ class Application(tk.Frame):
                 
                 sleep(2)
 
-            self.status_msg.config(fg='#000')
-            self.status_msg['text'] = "執行完畢..."
-            self.button.config(state='disabled')      
+            
                     
         except Exception as ex:
             if  type(ex).__name__ == 'NoSuchWindowException':
@@ -171,7 +170,7 @@ def searchTaiwanItemNo(china_item_no):
 def import_book(jd,opac):
     
     keyin_date = datetime.now().strftime("%Y-%m-%d")
-
+    log.test_log(f"{jd}")
     try:
         if jd['ISBN'] == '' or jd['book_name'] == '' or jd['publish'] == '' or jd['author'] == '':
             raise Exception('required fields are not satisfied.')
@@ -194,6 +193,8 @@ def import_book(jd,opac):
                 raise sugarhostException('error occured during updating book info.')
             
         else:
+            if opac['price'] == 0:
+                raise Exception('no price found on opac.')
             res = sugarhost.query("select max(book_no)+1 as new_book_no from china_book")
             if not res:
                 raise sugarhostException('error occured during getting max serial number.')
@@ -228,8 +229,8 @@ def import_book(jd,opac):
         return True
     
     except Exception as ex:
-        log.err_log(ex)
-        return False
+        raise Exception(ex)
+        
     
 
 # log.err_log("program is starting")
@@ -254,9 +255,9 @@ def import_book(jd,opac):
 
 
 def main():
-    root = tk.Tk()
-    app = Application(root)
-    root.mainloop()
+	#root = tk.Tk()
+	app = Application()
+	#root.mainloop()
 
 if __name__ == '__main__':
     main()
