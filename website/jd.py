@@ -26,28 +26,40 @@ def scrape(driver,isbn):
 
     sleep(3)
     try:
-        has_selfgood = False
+        book_found = False
 
         WebDriverWait(driver, 3, 0.1).until(
-                                EC.visibility_of_element_located((By.XPATH, "//div[@id='J_goodsList']/ul/li/div"))  )  			
+                                EC.visibility_of_element_located((By.XPATH, "//div[@id='J_goodsList']/ul/li/div/div"))  )  			
+        
+        
+        for idx,ele in enumerate(driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div/div")):
+            
 
-        for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
-            log.test_log(cc.convert(ele.text))
             if "自营" in ele.text:
-                has_selfgood= True
+                book_found= True
+                ele = ele.find_element(By.XPATH,'//*[@id="J_goodsList"]/ul/li['+str(idx)+']/div/div[1]/a/img')
+                #action chain object
+                action = ActionChains(driver)
+                # move to element operation
+                action.move_to_element(ele).perform()
+                sleep(1)
                 ele.click()
                 break
 		
-        if not has_selfgood:
+        if not book_found:
             
-            for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div"):
-                if "世紀書緣專營店" in cc.convert(ele.text):
-                   has_selfgood= True
-                   ele.click()
-                   break
+            for ele in driver.find_elements(By.XPATH, "//div[@id='J_goodsList']/ul/li/div/div"):
                 
-        else:    
-            raise Exception("Not selfByjd book found.")
+                if "世紀書緣專營店" in cc.convert(ele.text):
+                    book_found= True
+                    #action chain object
+                    action = ActionChains(driver)
+                    # move to element operation
+                    action.move_to_element(ele).click().perform()
+                    break
+                
+        if not book_found:
+            raise Exception("No book found.")
             
         sleep(2)
             
@@ -55,7 +67,7 @@ def scrape(driver,isbn):
         p = driver.current_window_handle
         #get first child window
         chwd = driver.window_handles
-        log.test_log("4")
+        
         for w in chwd:
             #switch focus to child window
             if(w!=p):
@@ -63,10 +75,10 @@ def scrape(driver,isbn):
         WebDriverWait(driver, 4, 0.1).until(
                             EC.visibility_of_element_located((By.XPATH, "//img[@id='spec-img']"))  )  		
         sleep(1)
-        log.test_log("5")	
+        
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        log.test_log("6")
+        
         book_info['book_name'] = get_bookname(soup)
         
         book_info['imglink'] = get_imgurl(driver)
@@ -82,7 +94,7 @@ def scrape(driver,isbn):
         except:  
             book_info['introduction'] = ""
         book_info['page_number'] = get_page_number(soup)
-        log.test_log("6")
+        
         driver.close()   
         driver.switch_to.window(p)
         sleep(1)

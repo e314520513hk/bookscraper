@@ -6,7 +6,7 @@ def err_log(msg):
         "message":msg
         }    
 
-    with open("errlog.txt", 'a') as errlog:
+    with open("log/errlog.txt", 'a') as errlog:
   
         errlog.write(format+"\n")
 
@@ -17,6 +17,11 @@ def test_log(msg):
         "message":msg
         }    
 
-    with open("testlog.txt", 'a') as errlog:
+    with open("log/testlog.txt", 'a') as errlog:
   
         errlog.write(format+"\n")
+
+def isbn_fail_log(msg,ymdhis):
+    with open(f"log/isbn_fail_{ymdhis}.txt", 'a') as errlog:
+  
+        errlog.write(msg+"\n")
